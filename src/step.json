@@ -1,0 +1,22 @@
+
+[
+  {
+     "Name": "foo2",
+     "Type": "Spark",
+     "ActionOnFailure": "CONTINUE",
+     "Args": [
+         "--jars", "s3://bitdatawest/pbin/xgboost4j-spark-0.90.jar,s3://bitdatawest/pbin/xgboost4j-0.90.jar,s3://bitdatawest/pbin/pysparkgw_2.11-0.1.jar",
+         "--conf", "spark.memory.fraction=0.95",
+         "--conf", "spark.memory.storageFraction=0.05",
+         "--conf", "spark.executor.memoryOverhead=20000",
+         "--conf", "spark.executor.memory=200g",
+         "--conf", "spark.executor.cores=20",
+         "--conf", "spark.executor.instances=12",
+         "--conf", "spark.dynamicAllocation.enabled=false",
+         "--deploy-mode", "client",
+         "--master","yarn",
+         "--driver-memory", "64g",
+         "s3://bitdatawest/pbin/psearch.py",""
+      ]
+  }
+]
