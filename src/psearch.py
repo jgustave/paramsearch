@@ -10,13 +10,16 @@
 
 #aws emr add-steps --cluster-id j-1BCCJULWS4JGJ --steps file:///Users/jerdavis/devhome/projects/paramsearch/src/step.json
 
-#spark-submit --jars s3://bitdatawest/pbin/xgboost4j-spark-0.90.jar,s3://bitdatawest/pbin/xgboost4j-0.90.jar,s3://bitdatawest/pbin/pysparkgw_2.11-0.1.jar --conf spark.memory.fraction=0.95 --conf spark.memory.storageFraction=0.05 --conf spark.executor.memoryOverhead=20000 --conf spark.executor.memory=200g --conf spark.executor.cores=20 --conf spark.executor.instances=12 --conf spark.dynamicAllocation.enabled=false --deploy-mode client --master yarn --driver-memory 6g s3://bitdatawest/pbin/psearch.py
 
 
 import os
+import sys
 
 if __name__ == "__main__":
 
+    inputPath=sys.argv[1]
+    outName=sys.argv[2]
+    numTrials = int(sys.argv[3])
 
     #import findspark
     #findspark.init('/Users/jerdavis/devlib/spark-2.4.3-bin-hadoop2.7/')
@@ -252,8 +255,10 @@ if __name__ == "__main__":
         try:
             xgbWrapper = spark.sparkContext._jvm.jd.PyTest
 
+            #'s3://dataproc-data/data/gen/gen1_1/',
+
             best_score = xgbWrapper.evalFoo(spark.sparkContext._jsc,
-                                         's3://dataproc-data/data/gen/gen1_1/',
+                                         inputPath,
                                          features,
                                          response,
                                          float(args['params']['eta']),
@@ -282,19 +287,19 @@ if __name__ == "__main__":
     from hyperopt import tpe, hp, fmin, Trials
 
     param_space = hp.choice('foo', [{'model': 'foom', 'params': {'eta': hp.uniform('eta', 0, 1),
-                                                                 'gamma': 1.0,
-                                                                 'max_depth': hp.quniform('max_depth', 3, 60, 3),
-                                                                 'max_leaves': 0,
-                                                                 'min_child_weight': 1.0,
-                                                                 'subsample': 1.0,
+                                                                 'gamma': hp.uniform('gamma', 0, 20),
+                                                                 'max_depth': hp.quniform('max_depth', 5, 250, 5),
+                                                                 'max_leaves': hp.quniform('max_leaves', 0, 400, 5),
+                                                                 'min_child_weight': hp.quniform('min_child_weight', 1, 12, 1),
+                                                                 'subsample': hp.uniform('subsample', 0.0, 1.0),
                                                                  'colsample_bytree': 1.0,
                                                                  'colsample_bylevel': 1.0,
-                                                                 'colsample_bynode': 1.0,
+                                                                 'colsample_bynode': hp.uniform('colsample_bynode', 0.9, 1.0),
                                                                  'lambda': 1.0,
                                                                  'alpha': 0.0,
-                                                                 'max_bin': hp.quniform('max_bin', 32, 512, 32),
+                                                                 'max_bin': hp.quniform('max_bin', 32, 1024, 32),
                                                                  'num_parallel_tree': hp.quniform('num_parallel_tree', 2,
-                                                                                                  60, 2),
+                                                                                                  200, 2),
                                                                  'num_round': 100,
                                                                  'num_early_stopping_rounds': 10,
                                                                  }}])
@@ -305,7 +310,7 @@ if __name__ == "__main__":
         max_trials = 2  # initial max_trials. put something small to not have to wait
 
         try:  # try to load an already saved trials object, and increase the max
-            trials = pickle.load(open("/tmp/my_model.hyperopt", "rb"))
+            trials = pickle.load(open("/tmp/"+outName+".hyperopt", "rb"))
             print("Found saved Trials! Loading...")
             max_trials = len(trials.trials) + trials_step
             print("Rerunning from {} trials to {} (+{}) trials".format(len(trials.trials), max_trials, trials_step))
@@ -318,10 +323,10 @@ if __name__ == "__main__":
         print("Best:", best_params)
 
         # save the trials object
-        with open("/tmp/my_model.hyperopt", "wb") as f:
+        with open("/tmp/"+outName+".hyperopt", "wb") as f:
             pickle.dump(trials, f)
 
 
     # loop indefinitely and stop whenever you like
-    while True:
+    for x in range(numTrials):
         run_trials()

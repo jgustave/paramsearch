@@ -10,13 +10,16 @@
          "--conf", "spark.memory.storageFraction=0.05",
          "--conf", "spark.executor.memoryOverhead=20000",
          "--conf", "spark.executor.memory=200g",
-         "--conf", "spark.executor.cores=20",
+         "--conf", "spark.executor.cores=32",
          "--conf", "spark.executor.instances=12",
          "--conf", "spark.dynamicAllocation.enabled=false",
          "--deploy-mode", "client",
          "--master","yarn",
          "--driver-memory", "64g",
-         "s3://bitdatawest/pbin/psearch.py",""
+         "s3://bitdatawest/pbin/psearch.py","",
+         "s3://dataproc-data/data/gen/gen1_3","",
+         "run3","",
+         "100",""
       ]
   }
 ]
